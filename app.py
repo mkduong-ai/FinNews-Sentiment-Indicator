@@ -73,7 +73,20 @@ def load_sentiment_history():
         return pd.read_csv(CSV_FILE)
     else:
         return pd.DataFrame(columns=['timestamp', 'average_sentiment'])
-    
+
+@st.cache_data(ttl=7200)  # cache the result for 2 hour (7200 seconds), re-runs automatically
+def retrieve_sentiment():
+    sentiment_history = load_sentiment_history()
+
+    if sentiment_history.empty or (datetime.now() - pd.to_datetime(sentiment_history['timestamp'].iloc[-1])).total_seconds() > 7190:
+        avg_sentiment = news_avg_sentiment()
+        save_sentiment(avg_sentiment)
+        sentiment_history = load_sentiment_history()
+    else:
+        avg_sentiment = sentiment_history['average_sentiment'].iloc[-1]
+
+    return avg_sentiment, sentiment_history
+
 def plot_sentiment_over_time(df):
     fig = go.Figure()
 
@@ -100,16 +113,7 @@ def plot_sentiment_over_time(df):
 
     
 def main():
-    # Load sentiment
-    sentiment_history = load_sentiment_history()
-
-    # If CSV is empty or last run was > 1 hour ago
-    if sentiment_history.empty or (datetime.now() - pd.to_datetime(sentiment_history['timestamp'].iloc[-1])).total_seconds() > 3600:
-        avg_sentiment = news_avg_sentiment()
-        save_sentiment(avg_sentiment)
-        sentiment_history = load_sentiment_history()
-    else:
-        avg_sentiment = sentiment_history['average_sentiment'].iloc[-1]
+    avg_sentiment, sentiment_history = retrieve_sentiment()
 
     # Frontend
     # Background color based on sentiment
@@ -133,6 +137,13 @@ def main():
 
     st.markdown(
         f"<h1 style='text-align: center; font-size: 100px;'>{avg_sentiment:.2f}</h1>",
+        unsafe_allow_html=True
+    )
+
+    # Small text for last update
+    last_updated = sentiment_history['timestamp'].iloc[-1]
+    st.markdown(
+        f"<p style='text-align: center; font-size: 16px; color: gray;'>Last updated: {last_updated.strftime('%Y-%m-%d %H:%M:%S')}</p>",
         unsafe_allow_html=True
     )
 
