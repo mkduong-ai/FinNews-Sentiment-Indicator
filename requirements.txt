@@ -4,4 +4,4 @@ torch
 pandas
 finvizfinance
 matplotlib
-
+plotly
