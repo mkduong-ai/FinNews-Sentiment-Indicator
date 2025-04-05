@@ -143,6 +143,14 @@ def main():
     if not sentiment_history.empty:
         sentiment_history['timestamp'] = pd.to_datetime(sentiment_history['timestamp'])
         plot_sentiment_over_time(sentiment_history)
+    
+        # Download sentiment history as CSV
+        st.download_button(
+            label="📥 Download Sentiment Data",
+            data=sentiment_history.to_csv(index=False).encode('utf-8'),
+            file_name='sentiment_history.csv',
+            mime='text/csv'
+        )
         
 
 if __name__ == "__main__":
