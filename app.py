@@ -141,7 +141,7 @@ def main():
     )
 
     # Small text for last update
-    last_updated = sentiment_history['timestamp'].iloc[-1]
+    last_updated = pd.to_datetime(sentiment_history['timestamp'].iloc[-1])
     st.markdown(
         f"<p style='text-align: center; font-size: 16px; color: gray;'>Last updated: {last_updated.strftime('%Y-%m-%d %H:%M:%S')}</p>",
         unsafe_allow_html=True
