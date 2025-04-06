@@ -2,7 +2,10 @@
 import os
 from datetime import datetime
 # Data
+
+import numpy as np
 import pandas as pd
+import feedparser
 from finvizfinance.news import News
 # ML
 from transformers import pipeline
@@ -51,6 +54,10 @@ sentiment_analysis = load_sentiment_model()
 # Functions
 def sentiment_score(text):
     return sentiment_analysis(text)[0]['label'] == "POSITIVE"
+
+def get_finviz_news():
+    fnews = News()
+    return fnews.get_news()
 
 def news_avg_sentiment():
     fnews = News()
@@ -111,7 +118,63 @@ def plot_sentiment_over_time(df):
 
     st.plotly_chart(fig, use_container_width=True)
 
-    
+def display_sentiment_text(avg_sentiment):
+    st.markdown(
+        f"<h1 style='text-align: center; font-size: 100px;'>{avg_sentiment:.2f}</h1>",
+        unsafe_allow_html=True
+    )
+
+def display_sentiment_fuel_gauge(avg_sentiment):
+    # Create many small color steps to fake a gradient
+    n_steps = 50
+    colors = []
+    for i in np.linspace(0, 1, n_steps):
+        if i < 0.5:
+            # interpolate red to yellow
+            r = 255
+            g = int(255 * (i / 0.5))
+            b = 0
+        else:
+            # interpolate yellow to green
+            r = int(255 * (1 - (i - 0.5) / 0.5))
+            g = 255
+            b = 0
+        colors.append({'range': [i, i + (1/n_steps)], 'color': f'rgb({r},{g},{b})'})
+
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=avg_sentiment,
+        number={'font': {'size': 100}, 'valueformat': '.2f'},
+        domain={'x': [0, 1], 'y': [0, 1]},
+        gauge={
+            'axis': {'range': [0, 1], 'tickwidth': 1, 'tickcolor': "darkblue"},
+            'bar': {'color': "black"},
+            'bgcolor': "rgba(0,0,0,0)",
+            'borderwidth': 2,
+            'bordercolor': "gray",
+            'steps': colors,
+            'threshold': {
+                'line': {'color': "black", 'width': 4},
+                'thickness': 0.75,
+                'value': avg_sentiment
+            }
+        }
+    ))
+
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=0, r=0, t=0, b=0),
+        #width=600,
+        height=300,
+    )
+
+    # Center it nicely
+    # Solution: create empty columns around it
+    st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+    st.plotly_chart(fig, use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
 def main():
     avg_sentiment, sentiment_history = retrieve_sentiment()
 
@@ -135,10 +198,8 @@ def main():
     # Display current sentiment
     st.title("📰 FinNews: Financial News Sentiment")
 
-    st.markdown(
-        f"<h1 style='text-align: center; font-size: 100px;'>{avg_sentiment:.2f}</h1>",
-        unsafe_allow_html=True
-    )
+    display_sentiment_fuel_gauge(avg_sentiment)
+    
 
     # Small text for last update
     last_updated = pd.to_datetime(sentiment_history['timestamp'].iloc[-1])
@@ -147,7 +208,7 @@ def main():
         unsafe_allow_html=True
     )
 
-    st.write("**Remark:** 1.0 = fully positive, 0.0 = fully negative")
+    #st.write("**Remark:** 1.0 = fully positive, 0.0 = fully negative")
 
     # Plot sentiment over time
     st.subheader("📈 Sentiment History")

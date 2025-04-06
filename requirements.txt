@@ -6,3 +6,4 @@ finvizfinance
 matplotlib
 plotly
 accelerate
+feedparser
