@@ -74,11 +74,11 @@ def load_sentiment_history():
     else:
         return pd.DataFrame(columns=['timestamp', 'average_sentiment'])
 
-@st.cache_data(ttl=7200)  # cache the result for 2 hour (7200 seconds), re-runs automatically
+@st.cache_data(ttl=3600)  # cache the result for 2 hour (7200 seconds), re-runs automatically
 def retrieve_sentiment():
     sentiment_history = load_sentiment_history()
 
-    if sentiment_history.empty or (datetime.now() - pd.to_datetime(sentiment_history['timestamp'].iloc[-1])).total_seconds() > 7190:
+    if sentiment_history.empty or (datetime.now() - pd.to_datetime(sentiment_history['timestamp'].iloc[-1])).total_seconds() > 7200:
         avg_sentiment = news_avg_sentiment()
         save_sentiment(avg_sentiment)
         sentiment_history = load_sentiment_history()
