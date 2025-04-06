@@ -5,3 +5,4 @@ pandas
 finvizfinance
 matplotlib
 plotly
+accelerate
