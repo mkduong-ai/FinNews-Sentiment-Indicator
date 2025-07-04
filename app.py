@@ -204,7 +204,7 @@ def main():
     )
 
     # Display current sentiment
-    st.title("📰 FinNews: Financial News Sentiment")
+    st.title("📰 Financial News Sentiment Index")
 
     display_sentiment_fuel_gauge(avg_sentiment)
     
