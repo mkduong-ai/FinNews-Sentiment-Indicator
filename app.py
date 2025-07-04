@@ -51,20 +51,29 @@ def load_sentiment_model():
 
 sentiment_analysis = load_sentiment_model()
 
-# Functions
 def sentiment_score(text):
     return sentiment_analysis(text)[0]['label'] == "POSITIVE"
 
 def get_finviz_news():
     fnews = News()
-    return fnews.get_news()
-
-def news_avg_sentiment():
-    fnews = News()
     all_news = fnews.get_news()
     news_df = pd.DataFrame(all_news['news'])
-    news_df['sentiment_score'] = news_df['Title'].apply(sentiment_score)
-    return news_df['sentiment_score'].mean()
+    return news_df['Title'].to_list()
+
+def news_avg_sentiment():
+    titles = get_finviz_news()
+    scores = [sentiment_score(title) for title in titles]
+    return np.mean(scores)
+
+def calculate_z_score(current_score, historical_scores):
+    mean = np.mean(historical_scores)
+    std_dev = np.std(historical_scores)
+    z_score = (current_score - mean) / std_dev if std_dev != 0 else 0  # Avoid division by zero
+    return z_score
+
+def calculate_quantile(current_score, historical_scores):
+    quantile = np.percentile(historical_scores, current_score * 100)  # Converts score to percentage
+    return quantile
 
 def save_sentiment(average_sentiment):
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -168,8 +177,7 @@ def display_sentiment_fuel_gauge(avg_sentiment):
         height=300,
     )
 
-    # Center it nicely
-    # Solution: create empty columns around it
+    # Center the gauge
     st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
